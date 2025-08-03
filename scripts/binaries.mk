@@ -13,25 +13,10 @@ RUN mkdir tmp binaries
 RUN cp mediamtx.yml LICENSE tmp/
 RUN go generate ./...
 
-FROM build-base AS build-windows-amd64
-ENV GOOS=windows GOARCH=amd64
-RUN go build -o "tmp/$(BINARY_NAME).exe"
-RUN cd tmp && zip -q "../binaries/$(BINARY_NAME)_$$(cat ../internal/core/VERSION)_windows_amd64.zip" "$(BINARY_NAME).exe" mediamtx.yml LICENSE
-
-FROM build-base AS build-linux-amd64
-ENV GOOS=linux GOARCH=amd64
+FROM build-base AS build-linux-armv5
+ENV GOOS=linux GOARCH=arm GOARM=5
 RUN go build -o "tmp/$(BINARY_NAME)"
-RUN tar -C tmp -czf "binaries/$(BINARY_NAME)_$$(cat internal/core/VERSION)_linux_amd64.tar.gz" --owner=0 --group=0 "$(BINARY_NAME)" mediamtx.yml LICENSE
-
-FROM build-base AS build-darwin-amd64
-ENV GOOS=darwin GOARCH=amd64
-RUN go build -o "tmp/$(BINARY_NAME)"
-RUN tar -C tmp -czf "binaries/$(BINARY_NAME)_$$(cat internal/core/VERSION)_darwin_amd64.tar.gz" --owner=0 --group=0 "$(BINARY_NAME)" mediamtx.yml LICENSE
-
-FROM build-base AS build-darwin-arm64
-ENV GOOS=darwin GOARCH=arm64
-RUN go build -o "tmp/$(BINARY_NAME)"
-RUN tar -C tmp -czf "binaries/$(BINARY_NAME)_$$(cat internal/core/VERSION)_darwin_arm64.tar.gz" --owner=0 --group=0 "$(BINARY_NAME)" mediamtx.yml LICENSE
+RUN tar -C tmp -czf "binaries/$(BINARY_NAME)_$$(cat internal/core/VERSION)_linux_armv5.tar.gz" --owner=0 --group=0 "$(BINARY_NAME)" mediamtx.yml LICENSE
 
 FROM build-base AS build-linux-armv6
 ENV GOOS=linux GOARCH=arm GOARM=6
@@ -43,19 +28,10 @@ ENV GOOS=linux GOARCH=arm GOARM=7
 RUN go build -o "tmp/$(BINARY_NAME)"
 RUN tar -C tmp -czf "binaries/$(BINARY_NAME)_$$(cat internal/core/VERSION)_linux_armv7.tar.gz" --owner=0 --group=0 "$(BINARY_NAME)" mediamtx.yml LICENSE
 
-FROM build-base AS build-linux-arm64
-ENV GOOS=linux GOARCH=arm64
-RUN go build -o "tmp/$(BINARY_NAME)"
-RUN tar -C tmp -czf "binaries/$(BINARY_NAME)_$$(cat internal/core/VERSION)_linux_arm64.tar.gz" --owner=0 --group=0 "$(BINARY_NAME)" mediamtx.yml LICENSE
-
 FROM $(BASE_IMAGE)
-COPY --from=build-windows-amd64 /s/binaries /s/binaries
-COPY --from=build-linux-amd64 /s/binaries /s/binaries
-COPY --from=build-darwin-amd64 /s/binaries /s/binaries
-COPY --from=build-darwin-arm64 /s/binaries /s/binaries
+COPY --from=build-linux-armv5 /s/binaries /s/binaries
 COPY --from=build-linux-armv6 /s/binaries /s/binaries
 COPY --from=build-linux-armv7 /s/binaries /s/binaries
-COPY --from=build-linux-arm64 /s/binaries /s/binaries
 endef
 export DOCKERFILE_BINARIES
 
